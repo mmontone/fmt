@@ -39,6 +39,18 @@
   (loop for clause in clauses
        do (format-clause destination clause)))
 
+;; Special arguments
+
+(defvar *_* nil)
+
+(defmethod read-arg ((arg (eql :_)))
+  *_*)
+
+(defmethod read-arg ((arg t))
+  arg)
+
+;; Format operations
+
 (defvar *format-operations* (make-hash-table :test #'equalp))
 
 (defstruct format-operation
@@ -114,17 +126,17 @@
 (define-format-operation standard
     (:keywords (:s :std :standard))
     (:format (destination clause)
-	     (prin1 (cadr clause) destination))
+	     (prin1 (read-arg (cadr clause)) destination))
     (:compile (destination clause)
-	      `(prin1 ,(cadr clause) ,destination))
+	      `(prin1 (read-arg ,(cadr clause)) ,destination))
     (:documentation "Standard print"))
 
 (define-format-operation aesthetic
   (:keywords (:a :aesthetic))
   (:format (destination clause)
-	   (princ (cadr clause) destination))
+	   (princ (read-arg (cadr clause)) destination))
   (:compile (destination clause)
-	    `(princ ,(cadr clause) ,destination))
+	    `(princ (read-arg ,(cadr clause)) ,destination))
   (:documentation "Aesthetic print"))
 
 (define-format-operation when
@@ -144,32 +156,47 @@
 (define-format-operation join
   (:keywords (:+ :j :join :concat :slice))
   (:format (destination clause)
-	   (destructuring-bind (_ separator args) clause
+	   (destructuring-bind (_ separator args &optional format) clause
 	     (when args
 	       (loop 
 		  for arg in (butlast args)
 		  do 
-		    (format-clause destination arg)
+		    (if format
+			(let ((*_* arg))
+			  (format-clause destination format))
+			(format-clause destination arg))
 		    (format-clause destination separator)
-		  finally (format-clause destination (car (last args)))))))
+		  finally (let ((arg (car (last args))))
+			    (if format
+				(let ((*_* arg))
+				  (format-clause destination format))
+				(format-clause destination arg)))))))
   (:compile (destination clause)
-	    (destructuring-bind (_ separator args) clause
+	    (destructuring-bind (_ separator args &optional format) clause
 	      (alexandria:with-unique-names (arg)
 		(alexandria:once-only (args)
 		  `(when ,args
 		     (loop 
 			for ,arg in (butlast ,args)
-			do 
-			  (format-clause ,destination ,arg)
+			do
+			  ,(if format
+			       `(let ((*_* ,arg))
+				  (format-clause ,destination ',format))
+			       `(format-clause ,destination ,arg))
 			  (format-clause ,destination ,separator)
-			finally (format-clause ,destination (car (last ,args)))))))))
+			finally (let ((arg (car (last ,args))))
+				  ,(if format
+				       `(let ((*_* ,arg))
+					  (format-clause ,destination ',format))
+				       `(format-clause ,destination ,arg)))))))))
   (:documentation "Join with separator"))
 
-(defun describe-format-operation (format-operation &optional (stream *standard-output*))
+#+nil(defun describe-format-operation (format-operation &optional (stream *standard-output*))
   (with-format (stream) 
     (format-operation-name format-operation) " FORMAT OPERATION"
     :newline
-    "Keywords: " (:join ", " (format-operation-keywords format-operation))
+    "Keywords: " (:join ", " (format-operation-keywords format-operation)
+			(:s :_))
     :newline
     :newline
     (format-operation-documentation format-operation)))
