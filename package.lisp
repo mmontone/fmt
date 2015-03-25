@@ -1,3 +1,6 @@
 (defpackage #:fmt
-  (:use #:cl))
+  (:use #:cl)
+  (:export :fmt
+	   :fmt*
+	   :with-fmt))
 
