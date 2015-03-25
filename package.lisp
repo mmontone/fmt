@@ -1,4 +1,3 @@
-(defpackage #:format-ext
-  (:nicknames :fmt)
+(defpackage #:fmt
   (:use #:cl))
 

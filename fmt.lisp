@@ -1,8 +1,8 @@
-(in-package #:format-ext)
+(in-package #:fmt)
 
-(defvar *format-destination* nil)
+(defvar *fmt-destination* nil)
 
-(defun call-with-format-destination (destination function &rest args)
+(defun call-with-fmt-destination (destination function &rest args)
   (etypecase destination
     (null
      (with-output-to-string (stream)
@@ -17,25 +17,32 @@
      (apply function destination args)
      nil)))
 
-(defmacro with-format-destination ((var &optional (destination *format-destination*))
+(defmacro with-fmt-destination ((var &optional (destination *fmt-destination*))
 				      &body body)
-  `(call-with-format-destination ,destination
+  `(call-with-fmt-destination ,destination
 				 (lambda (,var)
 				   ,@body)))
 
-(defmacro with-format ((&optional (destination '*format-destination*))
+(defmacro with-fmt ((&optional (destination '*fmt-destination*))
 		       &body body)
   (alexandria:with-unique-names (stream)
-    `(with-format-destination (,stream ,destination)
+    `(with-fmt-destination (,stream ,destination)
        ,@(loop for clause in body
 	    collect
 	      (compile-clause stream clause)))))
 
-(defun format* (&optional (destination *format-destination*) &rest clauses)
-  (apply #'call-with-format-destination 
-	 destination #'%format* clauses))
+(defmacro fmt (destination &rest clauses)
+  (alexandria:with-unique-names (stream)
+    `(with-fmt-destination (,stream ,destination)
+       ,@(loop for clause in clauses
+	    collect
+	      (compile-clause stream clause)))))
 
-(defun %format* (destination &rest clauses)
+(defun fmt* (&optional (destination *fmt-destination*) &rest clauses)
+  (apply #'call-with-fmt-destination 
+	 destination #'%fmt* clauses))
+
+(defun %fmt* (destination &rest clauses)
   (loop for clause in clauses
        do (format-clause destination clause)))
 
@@ -184,7 +191,7 @@
 				  (format-clause ,destination ',format))
 			       `(format-clause ,destination ,arg))
 			  (format-clause ,destination ,separator)
-			finally (let ((arg (car (last ,args))))
+			finally (let ((,arg (car (last ,args))))
 				  ,(if format
 				       `(let ((*_* ,arg))
 					  (format-clause ,destination ',format))
@@ -192,7 +199,7 @@
   (:documentation "Join with separator"))
 
 #+nil(defun describe-format-operation (format-operation &optional (stream *standard-output*))
-  (with-format (stream) 
+  (with-fmt (stream) 
     (format-operation-name format-operation) " FORMAT OPERATION"
     :newline
     "Keywords: " (:join ", " (format-operation-keywords format-operation)

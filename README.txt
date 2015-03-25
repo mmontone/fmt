@@ -1,1 +1,4 @@
-This is the stub README.txt for the "format-ext" project.
+FMT
+---
+
+An extensible Common Lisp format-like facility
