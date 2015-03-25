@@ -70,7 +70,7 @@
 (defmacro define-format-operation (name &body options)
   (flet ((extract-option (name)
 	   (cdr (find name options :key #'car))))
-    (alexandria:with-unique-names (format-operation keyword)
+    (alexandria:with-unique-names (format-operation)
       `(let ((,format-operation (make-format-operation
 				 :name ',name
 				 :keywords ',(first (extract-option :keywords))
@@ -87,6 +87,56 @@
 
 (defun find-format-operation (keyword)
   (gethash keyword *format-operations*))
+
+(defvar *format-filters* (make-hash-table :test #'equalp))
+
+(defstruct format-filter
+  name
+  keywords
+  apply
+  compile
+  documentation)
+
+(defmacro define-format-filter (name &body options)
+  (flet ((extract-option (name)
+	   (cdr (find name options :key #'car))))
+    (alexandria:with-unique-names (format-filter)
+      `(let ((,format-filter (make-format-filter
+			      :name ',name
+			      :keywords ',(first (extract-option :keywords))
+			      :apply ,(let ((apply (extract-option :apply)))
+					    `(lambda ,(first apply)
+					       ,@(rest apply)))
+			      :compile ,(let ((compile (extract-option :compile)))
+					     `(lambda ,(first compile)
+						,@(rest compile)))
+			      :documentation ,(first (extract-option :documentation)))))
+	 ,@(loop for keyword in (first (extract-option :keywords))
+	      collect `(setf (gethash ,keyword *format-filters*)
+			     ,format-filter))))))
+
+(defun find-format-filter (keyword)
+  (gethash keyword *format-filters*))
+
+(defun apply-format-filter (keyword arg)
+  (let ((filter (find-format-filter keyword)))
+    (if filter
+	(funcall (format-filter-apply filter) arg)
+	(error "Invalid filter: ~A" filter))))
+
+(defun compile-format-filter (keyword arg)
+  (let ((filter (find-format-filter keyword)))
+    (if filter
+	(funcall (format-filter-compile filter) arg)
+	(error "Invalid filter: ~A" filter))))
+
+(define-format-filter upcase
+  (:keywords (:up :upcase))
+  (:apply (arg)
+	  (string-upcase arg))
+  (:compile (arg)
+	    `(string-upcase ,arg))
+  (:documentation "String upcase"))
 
 (defmethod format-clause (destination (clause string))
   (write-string clause destination))
@@ -130,9 +180,18 @@
 (define-format-operation standard
     (:keywords (:s :std :standard))
     (:format (destination clause)
-	     (prin1 (read-arg (cadr clause)) destination))
+	     (destructuring-bind (_ arg &rest filters) clause
+	       (let ((arg (read-arg arg)))
+		 (loop for filter in filters
+		    do (setf arg (apply-format-filter filter arg)))
+		 (prin1 arg destination))))
     (:compile (destination clause)
-	      `(prin1 (read-arg ,(cadr clause)) ,destination))
+	      (alexandria:with-unique-names (read-arg)
+		(destructuring-bind (_ arg &rest filters) clause
+		  `(let ((,read-arg (read-arg ,arg)))
+		     ,@(loop for filter in filters
+			  collect `(setf ,read-arg ,(compile-format-filter filter read-arg)))
+		     (prin1 ,read-arg ,destination)))))
     (:documentation "Standard print"))
 
 (define-format-operation aesthetic
