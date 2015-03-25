@@ -114,9 +114,6 @@
 (defmethod compile-clause (destination (clause character))
   `(write-char ,clause ,destination))
 
-(defmethod compile-clause (destination (clause (eql :newline)))
-  `(terpri ,destination))
-
 (defmethod compile-clause (destination (clause cons))
   (if (keywordp (first clause))
       (let ((format-operation (find-format-operation (first clause))))
@@ -201,9 +198,9 @@
 #+nil(defun describe-format-operation (format-operation &optional (stream *standard-output*))
   (with-fmt (stream) 
     (format-operation-name format-operation) " FORMAT OPERATION"
-    :newline
+    #\newline
     "Keywords: " (:join ", " (format-operation-keywords format-operation)
 			(:s :_))
-    :newline
-    :newline
+    #\newline
+    #\newline
     (format-operation-documentation format-operation)))
