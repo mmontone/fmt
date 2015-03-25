@@ -195,6 +195,16 @@
 				       `(format-clause ,destination ,arg)))))))))
   (:documentation "Join with separator"))
 
+(define-format-operation format
+  (:keywords (:format))
+  (:format (destination clause)
+	   (destructuring-bind (_ control-string &rest args) clause
+	       (apply #'format destination control-string args)))
+  (:compile (destination clause)
+	    (destructuring-bind (_ control-string &rest args) clause
+		`(format ,destination ,control-string ,@args)))
+  (:documentation "Format using Common Lisp format function"))
+
 #+nil(defun describe-format-operation (format-operation &optional (stream *standard-output*))
   (with-fmt (stream) 
     (format-operation-name format-operation) " FORMAT OPERATION"
