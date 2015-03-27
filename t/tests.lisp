@@ -140,4 +140,16 @@ end")))
 			    (:a "yes")
 			    :else
 			    (:a "no")))
-	      "no")))
+	      "no"))
+  (let ((list (list 1 2 3)))
+    (is (equalp (fmt nil (:if (not list)
+			      "none"
+			      :else
+			      (:join "," list)))
+		"1,2,3")))
+  (let ((list (list)))
+    (is (equalp (fmt nil (:if (not list)
+			      "none"
+			      :else
+			      (:join "," list)))
+		"none"))))
