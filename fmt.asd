@@ -5,5 +5,6 @@
   :serial t
   :components ((:file "package")
                (:file "fmt"))
-  :depends-on (:alexandria))
+  :depends-on (:alexandria)
+  :in-order-to ((asdf:test-op (asdf:test-op :fmt-test))))
 
