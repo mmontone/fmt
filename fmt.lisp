@@ -130,8 +130,12 @@
      (let ((filter (find-format-filter keyword-or-cons)))
        (funcall (format-filter-apply filter) arg)))
     (cons
-     (let ((filter (find-format-filter (first keyword-or-cons))))
-       (apply (format-filter-apply filter) arg (cdr keyword-or-cons))))))
+     (if (equalp (first keyword-or-cons) 'function)
+	 (funcall (symbol-function (cadr keyword-or-cons)) arg)
+	 (let ((filter (find-format-filter (first keyword-or-cons))))
+	   (apply (format-filter-apply filter) arg (cdr keyword-or-cons)))))
+    (function
+     (funcall keyword-or-cons arg))))
 
 (defun compile-format-filter (keyword-or-cons arg)
   (etypecase keyword-or-cons
@@ -139,8 +143,10 @@
      (let ((filter (find-format-filter keyword-or-cons)))
        (funcall (format-filter-compile filter) arg)))
     (cons
-     (let ((filter (find-format-filter (first keyword-or-cons))))
-       (apply (format-filter-compile filter) arg (cdr keyword-or-cons))))))     
+     (if (equalp (first keyword-or-cons) 'function)
+	 (list (cadr keyword-or-cons) arg)
+	 (let ((filter (find-format-filter (first keyword-or-cons))))
+	   (apply (format-filter-compile filter) arg (cdr keyword-or-cons)))))))
 
 (define-format-filter upcase
   (:keywords (:up :upcase))
