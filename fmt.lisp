@@ -337,6 +337,42 @@
 	    `(progn ,@(rest clause)))
   (:documentation "Escape clauses formatting"))
 
+(define-format-operation radix
+  (:keywords (:r :radix))
+  (:format (destination clause)
+	   (destructuring-bind (_ arg &optional (n :cardinal)) clause
+	     (etypecase n
+	       (integer
+		(format destination (format nil "~~~AR" n)
+			arg))
+	       (symbol
+		(ecase n
+		  (:cardinal
+		   (format destination "~R" arg))
+		  (:ordinal
+		   (format destination "~:R" arg))
+		  (:roman
+		   (format destination "~@R" arg))
+		  (:old-roman
+		   (format destination "~:@R" arg)))))))
+  (:compile (destination clause)
+	    (destructuring-bind (_ arg &optional (n :cardinal)) clause
+	      (etypecase n
+		(integer
+		 `(format ,destination ,(format nil "~~~AR" n)
+			  ,arg))
+		(symbol
+		 (ecase n
+		   (:cardinal
+		    `(format ,destination "~R" ,arg))
+		   (:ordinal
+		    `(format ,destination "~:R" ,arg))
+		   (:roman
+		    `(format ,destination "~@R" ,arg))
+		   (:old-roman
+		    `(format ,destination "~:@R" ,arg)))))))
+  (:documentation "Radix operation"))
+
 #+nil(defun describe-format-operation (format-operation &optional (stream *standard-output*))
   (with-fmt (stream) 
     (format-operation-name format-operation) " FORMAT OPERATION"

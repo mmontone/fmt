@@ -112,3 +112,19 @@ end")))
 	      "hello"))
   (is (equalp (fmt nil (:a "//hello" (:trim #\/)))
 	      "hello")))
+
+(test radix-operation-test
+  (is (equalp (fmt nil (:r 4))
+	      "four"))
+  (is (equalp (fmt nil (:r 4 :cardinal))
+	      "four"))
+  (is (equalp (fmt nil (:r 4 :ordinal))
+	      "fourth"))
+  (is (equalp (fmt nil (:r 4 2))
+	      "100"))
+  (is (equalp (fmt nil (:r 4 :roman))
+	      "IV"))
+  (is (equalp (fmt nil (:r 4 :old-roman))
+	      "IIII")))
+  
+      
