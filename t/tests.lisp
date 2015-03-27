@@ -54,3 +54,9 @@ world")))
   (is (equalp (fmt nil (:do (item (list 1 2 3))
 			    (:s item)))
 	      "123")))
+
+(test filter-test
+  (is (equalp (fmt nil (:a "lala" :upcase))
+	      "LALA"))
+  (is (equalp (fmt nil (:s "lala" :up))
+	      "\"LALA\"")))

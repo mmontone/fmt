@@ -197,9 +197,18 @@
 (define-format-operation aesthetic
   (:keywords (:a :aesthetic))
   (:format (destination clause)
-	   (princ (read-arg (cadr clause)) destination))
+	   (destructuring-bind (_ arg &rest filters) clause
+	       (let ((arg (read-arg arg)))
+		 (loop for filter in filters
+		    do (setf arg (apply-format-filter filter arg)))
+		 (princ arg destination))))
   (:compile (destination clause)
-	    `(princ (read-arg ,(cadr clause)) ,destination))
+	    (alexandria:with-unique-names (read-arg)
+		(destructuring-bind (_ arg &rest filters) clause
+		  `(let ((,read-arg (read-arg ,arg)))
+		     ,@(loop for filter in filters
+			  collect `(setf ,read-arg ,(compile-format-filter filter read-arg)))
+		     (princ ,read-arg ,destination)))))
   (:documentation "Aesthetic print"))
 
 (define-format-operation when
