@@ -92,3 +92,11 @@ end")))
 	      "\"a\", \"b\", \"c\""))
   (is (equalp (fmt nil (:join ", " (list "a" "b" "c") (:a _ :up)))
 	      "A, B, C")))
+
+(test trim-filter-test
+  (is (equalp (fmt nil (:a "  hello  " :trim))
+	      "hello"))
+  (is (equalp (fmt nil (:a "  hello  " (:trim #\ )))
+	      "hello"))
+  (is (equalp (fmt nil (:a "//hello" (:trim #\/)))
+	      "hello")))

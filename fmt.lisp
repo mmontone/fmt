@@ -119,20 +119,28 @@
 	      collect `(setf (gethash ,keyword *format-filters*)
 			     ,format-filter))))))
 
-(defun find-format-filter (keyword)
-  (gethash keyword *format-filters*))
+(defun find-format-filter (keyword &optional (error-p t))
+  (or
+   (gethash keyword *format-filters*)
+   (error "Invalid filter: ~S" keyword)))
 
-(defun apply-format-filter (keyword arg)
-  (let ((filter (find-format-filter keyword)))
-    (if filter
-	(funcall (format-filter-apply filter) arg)
-	(error "Invalid filter: ~A" filter))))
+(defun apply-format-filter (keyword-or-cons arg)
+  (etypecase keyword-or-cons
+    (symbol 
+     (let ((filter (find-format-filter keyword-or-cons)))
+       (funcall (format-filter-apply filter) arg)))
+    (cons
+     (let ((filter (find-format-filter (first keyword-or-cons))))
+       (apply (format-filter-apply filter) arg (cdr keyword-or-cons))))))
 
-(defun compile-format-filter (keyword arg)
-  (let ((filter (find-format-filter keyword)))
-    (if filter
-	(funcall (format-filter-compile filter) arg)
-	(error "Invalid filter: ~A" filter))))
+(defun compile-format-filter (keyword-or-cons arg)
+  (etypecase keyword-or-cons
+    (symbol
+     (let ((filter (find-format-filter keyword-or-cons)))
+       (funcall (format-filter-compile filter) arg)))
+    (cons
+     (let ((filter (find-format-filter (first keyword-or-cons))))
+       (apply (format-filter-compile filter) arg (cdr keyword-or-cons))))))     
 
 (define-format-filter upcase
   (:keywords (:up :upcase))
@@ -149,6 +157,15 @@
   (:compile (arg)
 	    `(string-downcase ,arg))
   (:documentation "String downcase"))
+
+(define-format-filter trim
+  (:keywords (:trim))
+  (:apply (arg &rest chars)
+	  (string-trim (or chars (list #\ )) arg))
+  (:compile (arg &rest chars)
+	    (let ((chars-bag (or chars (list #\ ))))
+	      `(string-trim ',chars-bag ,arg)))
+  (:documentation "String trim filter"))
 
 (defgeneric format-clause (destination clause))
 
