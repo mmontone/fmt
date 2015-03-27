@@ -142,6 +142,14 @@
 	    `(string-upcase ,arg))
   (:documentation "String upcase"))
 
+(define-format-filter downcase
+  (:keywords (:down :downcase))
+  (:apply (arg)
+	  (string-downcase arg))
+  (:compile (arg)
+	    `(string-downcase ,arg))
+  (:documentation "String downcase"))
+
 (defgeneric format-clause (destination clause))
 
 (defmethod format-clause :around (destination clause)
