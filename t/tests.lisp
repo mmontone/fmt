@@ -60,3 +60,29 @@ world")))
 	      "LALA"))
   (is (equalp (fmt nil (:s "lala" :up))
 	      "\"LALA\"")))
+
+(test escape-test
+  (is (equalp (fmt nil
+		   "hello"
+		   (:esc #\space "beautiful")
+		   #\space "world")
+	      "hello world"))
+  (is (equalp (fmt* nil
+		    "hello"
+		    `(:esc #\space "beautiful")
+		    #\space
+		    "world")
+	      "hello world")))		   
+
+(test control-flow-test
+  (is (equalp (fmt nil 
+		   (:a "start")
+		   #\newline
+		   (:esc 
+		    (loop for x in (list 1 2 3)
+			do (emb (:s x))))
+		   #\newline
+		   (:a "end"))
+	      "start
+123
+end")))

@@ -2,5 +2,6 @@
   (:use #:cl)
   (:export :fmt
 	   :fmt*
-	   :with-fmt))
+	   :with-fmt
+	   :emb))
 

@@ -1,6 +1,7 @@
 (in-package #:fmt)
 
 (defvar *fmt-destination* nil)
+(defvar *escape* nil)
 
 (defun call-with-fmt-destination (destination function &rest args)
   (etypecase destination
@@ -34,9 +35,11 @@
 (defmacro fmt (destination &rest clauses)
   (alexandria:with-unique-names (stream)
     `(with-fmt-destination (,stream ,destination)
-       ,@(loop for clause in clauses
-	    collect
-	      (compile-clause stream clause)))))
+       (macrolet ((emb (&rest clauses)
+		    `(fmt ,',stream ,@clauses)))
+	 ,@(loop for clause in clauses
+	      collect
+		(compile-clause stream clause))))))
 
 (defun fmt* (&optional (destination *fmt-destination*) &rest clauses)
   (apply #'call-with-fmt-destination 
@@ -137,6 +140,12 @@
   (:compile (arg)
 	    `(string-upcase ,arg))
   (:documentation "String upcase"))
+
+(defgeneric format-clause (destination clause))
+
+(defmethod format-clause :around (destination clause)
+  (when (not *escape*)
+    (call-next-method)))
 
 (defmethod format-clause (destination (clause string))
   (write-string clause destination))
@@ -285,6 +294,16 @@
 		      ,@(loop for clause in clauses
 			     collect (compile-clause destination clause)))))
   (:documentation "Iteration operation"))
+
+(define-format-operation escape
+  (:keywords (:esc :escape))
+  (:format (destination clause)
+	   (let ((*escape* t))
+	     (loop for clause in (rest clause)
+		  do (format-clause destination clause))))
+  (:compile (destination clause)
+	    `(progn ,@(rest clause)))
+  (:documentation "Escape clauses formatting"))
 
 #+nil(defun describe-format-operation (format-operation &optional (stream *standard-output*))
   (with-fmt (stream) 
