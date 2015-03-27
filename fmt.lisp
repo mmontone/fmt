@@ -431,6 +431,21 @@
 	    `(format ,destination "~X" ,(second clause)))
   (:documentation "Hexadecimal operation"))
 
+(define-format-operation float
+  (:keywords (:f :float))
+  (:format (destination clause)
+	   (destructuring-bind (_ float &rest args &key width digits scale 
+				  overflowchar padchar) clause
+	     (let ((control-string (format nil "~~~{~A~^,~}F" (remove-if #'null args))))
+	       (format destination control-string float))))
+  (:compile (destination clause)
+	    (destructuring-bind (_ float &key width digits scale 
+				   overflowchar padchar) clause
+	      (let ((args (list width digits scale overflowchar padchar)))
+		(let ((control-string (format nil "~~~{~A~^,~}F" (remove-if #'null args))))
+		  `(format ,destination ,control-string ,float)))))
+  (:documentation "Float operation"))
+
 (defun collect-then-and-else (clauses)
   (let ((then
 	 (loop 

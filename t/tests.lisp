@@ -177,6 +177,14 @@ end")))
   (is (equalp (fmt* nil `(:x 20))
 	      "14")))
 
+(test float-operation-test
+  (is (equalp (fmt nil (:f 23.1234))
+	      "23.1234"))
+  (is (equalp (fmt nil (:f 23.1234 :width 5))
+	      "23.12"))
+  (is (equalp (fmt nil (:f 23.1234 :width 4 :digits 1))
+	      "23.1")))
+
 (test if-operation-test
   (is (equalp (fmt nil (:if t
 			    (:a "yes")))
