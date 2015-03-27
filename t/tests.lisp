@@ -13,6 +13,12 @@
   (is (equalp (fmt nil "Hello" #\newline
 		   "world")
 	      "Hello
+world"))
+  (is (equalp (fmt* nil "Hello" #\space "world")
+	      "Hello world"))
+  (is (equalp (fmt* nil "Hello" #\newline
+		    "world")
+	      "Hello
 world")))
 
 
@@ -30,6 +36,10 @@ world")))
   (is (equalp (fmt nil (:s "foo"))
 	      "\"foo\""))
   (is (equalp (fmt nil (:s (list :a :b :c)))
+	      "(:A :B :C)"))
+  (is (equalp (fmt* nil `(:s ,"foo"))
+	      "\"foo\""))
+  (is (equalp (fmt* nil `(:s ,(list :a :b :c)))
 	      "(:A :B :C)")))
 
 (test when-test
@@ -142,6 +152,30 @@ end")))
 	      "IV"))
   (is (equalp (fmt nil (:r 4 :old-roman))
 	      "IIII")))
+
+(test decimal-operation-test
+  (is (equalp (fmt nil (:d 23))
+	      "23"))
+  (is (equalp (fmt* nil `(:d ,23))
+	      "23")))
+
+(test binary-operation-test
+  (is (equalp (fmt nil (:b 5))
+	      "101"))
+  (is (equalp (fmt* nil `(:b 5))
+	      "101")))
+
+(test octal-operation-test
+  (is (equalp (fmt nil (:o 20))
+	      "24"))
+  (is (equalp (fmt* nil `(:o 20))
+	      "24")))
+
+(test hexadecimal-operation-test
+  (is (equalp (fmt nil (:x 20))
+	      "14"))
+  (is (equalp (fmt* nil `(:x 20))
+	      "14")))
 
 (test if-operation-test
   (is (equalp (fmt nil (:if t

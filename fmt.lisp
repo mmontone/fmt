@@ -399,6 +399,38 @@
 		    `(format ,destination "~:@R" ,arg)))))))
   (:documentation "Radix operation"))
 
+(define-format-operation decimal
+  (:keywords (:d :decimal))
+  (:format (destination clause)
+	  (format destination "~D" (second clause)))
+  (:compile (destination clause)
+	    `(format ,destination "~D" ,(second clause)))
+  (:documentation "Decimal operation"))
+
+(define-format-operation binary
+  (:keywords (:b :binary))
+  (:format (destination clause)
+	  (format destination "~B" (second clause)))
+  (:compile (destination clause)
+	    `(format ,destination "~B" ,(second clause)))
+  (:documentation "Binary operation"))
+
+(define-format-operation octal
+  (:keywords (:o :oct :octal))
+  (:format (destination clause)
+	  (format destination "~O" (second clause)))
+  (:compile (destination clause)
+	    `(format ,destination "~O" ,(second clause)))
+  (:documentation "Octal operation"))
+
+(define-format-operation hexadecimal
+  (:keywords (:x :hex :hexadecimal))
+  (:format (destination clause)
+	  (format destination "~X" (second clause)))
+  (:compile (destination clause)
+	    `(format ,destination "~X" ,(second clause)))
+  (:documentation "Hexadecimal operation"))
+
 (defun collect-then-and-else (clauses)
   (let ((then
 	 (loop 
