@@ -49,3 +49,8 @@ world")))
 	      ""))
   (is (equalp (fmt nil (:join #\space '(a b c)))
 	      "A B C")))
+
+(test do-test
+  (is (equalp (fmt nil (:do (item (list 1 2 3))
+			    (:s item)))
+	      "123")))

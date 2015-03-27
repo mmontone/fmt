@@ -264,6 +264,19 @@
 		`(format ,destination ,control-string ,@args)))
   (:documentation "Format using Common Lisp format function"))
 
+(define-format-operation do
+  (:keywords (:do))
+  (:format (destination clause)
+	   (error "No interpreted :do operation"))
+  (:compile (destination clause)
+	    (destructuring-bind (_ (var list) &body clauses) clause
+	      `(loop 
+		  :for ,var :in ,list
+		  :do
+		      ,@(loop for clause in clauses
+			     collect (compile-clause destination clause)))))
+  (:documentation "Iteration operation"))
+
 #+nil(defun describe-format-operation (format-operation &optional (stream *standard-output*))
   (with-fmt (stream) 
     (format-operation-name format-operation) " FORMAT OPERATION"
