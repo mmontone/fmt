@@ -86,3 +86,9 @@ world")))
 	      "start
 123
 end")))
+
+(test special-argument-test 
+  (is (equalp (fmt nil (:join ", " (list "a" "b" "c") (:s _)))
+	      "\"a\", \"b\", \"c\""))
+  (is (equalp (fmt nil (:join ", " (list "a" "b" "c") (:a _ :up)))
+	      "A, B, C")))

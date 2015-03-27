@@ -53,11 +53,12 @@
 
 (defvar *_* nil)
 
-(defmethod read-arg ((arg (eql :_)))
-  *_*)
-
-(defmethod read-arg ((arg t))
-  arg)
+(defun read-arg (arg)
+  (cond 
+    ((and (symbolp arg)
+	  (equalp (string arg) "_"))
+     *_*)
+    (t arg)))
 
 ;; Format operations
 
