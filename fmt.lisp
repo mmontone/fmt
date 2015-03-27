@@ -270,38 +270,64 @@
   (:keywords (:+ :j :join :concat :slice))
   (:format (destination clause)
 	   (destructuring-bind (_ separator args &optional format) clause
-	     (when args
-	       (loop 
-		  for arg in (butlast args)
-		  do 
-		    (if format
-			(let ((*_* arg))
-			  (format-clause destination format))
-			(format-clause destination arg))
-		    (format-clause destination separator)
-		  finally (let ((arg (car (last args))))
+	     (multiple-value-bind (separator last-separator)
+		 (if (listp separator)
+		     (values (first separator)
+			     (second separator))
+		     (values separator separator))
+	       (when args
+		 (let ((arg (first args)))
+		   (if format
+		       (let ((*_* arg))
+			 (format-clause destination format))
+		       (format-clause destination arg))
+		   (when (cdr args)
+		     (loop 
+			for arg in (butlast (cdr args))
+			do
+			  (format-clause destination separator)
+			  (if format
+			      (let ((*_* arg))
+				(format-clause destination format))
+			      (format-clause destination arg))
+			finally 
+			  (format-clause destination last-separator)
+			  (let ((arg (car (last args))))
 			    (if format
 				(let ((*_* arg))
 				  (format-clause destination format))
-				(format-clause destination arg)))))))
+				(format-clause destination arg))))))))))
   (:compile (destination clause)
 	    (destructuring-bind (_ separator args &optional format) clause
 	      (alexandria:with-unique-names (arg)
 		(alexandria:once-only (args)
-		  `(when ,args
-		     (loop 
-			for ,arg in (butlast ,args)
-			do
-			  ,(if format
-			       `(let ((*_* ,arg))
-				  (format-clause ,destination ',format))
-			       `(format-clause ,destination ,arg))
-			  (format-clause ,destination ,separator)
-			finally (let ((,arg (car (last ,args))))
-				  ,(if format
-				       `(let ((*_* ,arg))
-					  (format-clause ,destination ',format))
-				       `(format-clause ,destination ,arg)))))))))
+		  (multiple-value-bind (separator last-separator)
+		      (if (listp separator)
+			  (values (first separator)
+				  (second separator))
+			  (values separator separator))
+		    `(when ,args
+		       (let ((,arg (first ,args)))
+			 ,(if format
+			      `(let ((*_* ,arg))
+				 (format-clause ,destination ',format))
+			      `(format-clause ,destination ,arg)))
+		       (when (cdr ,args)
+			 (loop 
+			    for ,arg in (butlast (cdr ,args))
+			    do
+			      (format-clause ,destination ,separator)
+			      ,(if format
+				   `(let ((*_* ,arg))
+				      (format-clause ,destination ',format))
+				   `(format-clause ,destination ,arg))
+			    finally 
+			      (format-clause ,destination ,last-separator)
+			      (let ((,arg (car (last ,args))))
+				,(if format
+				     `(let ((*_* ,arg))
+					(format-clause ,destination ',format))
+				     `(format-clause ,destination ,arg)))))))))))
   (:documentation "Join with separator"))
 
 (define-format-operation format
