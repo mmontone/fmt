@@ -126,5 +126,18 @@ end")))
 	      "IV"))
   (is (equalp (fmt nil (:r 4 :old-roman))
 	      "IIII")))
-  
-      
+
+(test if-operation-test
+  (is (equalp (fmt nil (:if t
+			    (:a "yes")))
+	      "yes"))
+  (is (equalp (fmt nil (:if t
+			    (:a "yes")
+			    :else
+			    (:a "no")))
+	      "yes"))
+  (is (equalp (fmt nil (:if nil
+			    (:a "yes")
+			    :else
+			    (:a "no")))
+	      "no")))

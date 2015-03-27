@@ -373,6 +373,31 @@
 		    `(format ,destination "~:@R" ,arg)))))))
   (:documentation "Radix operation"))
 
+(defun collect-then-and-else (clauses)
+  (let ((then
+	 (loop 
+	    for clause = (pop clauses)
+	    while (and clause (not (equalp clause :else)))
+	    collect clause)))
+    (values then clauses)))
+
+(define-format-operation if
+  (:keywords (:if))
+  (:apply (destination clause)
+	  (error "No interpreted :if operation"))
+  (:compile (destination clause)
+	    (destructuring-bind (_ condition &body clauses) clause
+		(multiple-value-bind (then-clauses else-clauses)
+		    (collect-then-and-else clauses)
+		  `(if ,condition
+		       (progn
+			 ,@(loop for clause in then-clauses
+			      collect (compile-clause destination clause)))
+		       (progn
+			 ,@(loop for clause in else-clauses
+			      collect (compile-clause destination clause)))))))
+  (:documentation "Conditional operation"))	      
+
 #+nil(defun describe-format-operation (format-operation &optional (stream *standard-output*))
   (with-fmt (stream) 
     (format-operation-name format-operation) " FORMAT OPERATION"
