@@ -26,11 +26,14 @@
 
 (defmacro with-fmt ((&optional (destination '*fmt-destination*))
 		       &body body)
+  "Format clauses in BODY to DESTINATION"
   (alexandria:with-unique-names (stream)
     `(with-fmt-destination (,stream ,destination)
-       ,@(loop for clause in body
-	    collect
-	      (compile-clause stream clause)))))
+       (macrolet ((emb (&rest clauses)
+		    `(fmt ,',stream ,@clauses)))
+	 ,@(loop for clause in body
+	      collect
+		(compile-clause stream clause))))))
 
 (defmacro fmt (destination &rest clauses)
   (alexandria:with-unique-names (stream)
