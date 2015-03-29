@@ -208,6 +208,19 @@ Example:
 Note: `:do` is not implemented in interpreter mode, so it cannot be used
 in `fmt*` function.
 
+Repetition (:times)
+-------------------
+
+Repeat formatting N number of times
+
+Syntax:
+
+    (:times <clause> <n>)
+
+Example:
+
+    (fmt nil (:times #\newline 5))
+
 Join (:join)
 ------------
 

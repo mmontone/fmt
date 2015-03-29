@@ -211,3 +211,9 @@ end")))
 			      :else
 			      (:join "," list)))
 		"none"))))
+
+(test times-test
+  (is (equalp (fmt nil (:times #\space 5))
+	      "     "))
+  (is (equalp (fmt* nil `(:times #\a 6))
+	      "aaaaaa")))
