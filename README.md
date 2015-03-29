@@ -98,8 +98,8 @@ Example:
 
 returns `"(:FOO :BAR :BAZ)"`
 
-Special operations:
-===================
+Special operations
+==================
 
 Escaping (:esc and :fmt)
 ------------------------
@@ -219,6 +219,20 @@ Example:
 
     (fmt nil (:times #\newline 5))
 
+More complex control flow
+-------------------------
+
+Just use lisp with `:esc` and `:fmt` for more complex control flow.
+
+Example:
+
+    (let ((list (list 1 2 3)))
+      (fmt nil (:esc (if (not list)
+                       (:fmt "No elements")
+                       (loop for x in (butlast list)
+                             do (:fmt (:a x) "; ")
+                             finally (:fmt (:a (car (last list)))))))))           
+
 Other operations
 ================
 
@@ -296,8 +310,9 @@ Radix (:r, :radix)
 Prints argument in radix. Equivalent to [Common Lisp FORMAT's
 \~R](http://www.lispworks.com/documentation/lw50/CLHS/Body/22_cba.htm)
 
-Syntax::  
-(:r n &optional (interpretation :cardinal))
+Syntax:
+
+    (:r n &optional (interpretation :cardinal))
 
 `interpretation` can be `:cardinal`, `:ordinal`, `:roman` and
 `:old-roman`.
@@ -314,8 +329,113 @@ Examples:
 Extending FMT
 =============
 
-Custom operations definition
-----------------------------
+Custom formatting operations definition
+---------------------------------------
+
+Custom formatting operations can be defined via
+`define-format-operation` macro.
+
+It has the following syntax:
+
+    (define-format-operation operation-name
+       (:keywords keyword-list)
+       (:format (destination clause)
+             &body body)
+       (:compile (destination clause)
+             &body body)
+       (:documentation docstring))
+
+Where:
+
+-   `keyword-list` is a list of keywords with which the formatting
+    operation can be invoked.
+-   `format` is the function that is run at run-time for formatting with
+    `fmt*` function. `destination` is the current formatting
+    destination, and `clause` is the whole format clause.
+-   `compile` is the code transformation triggered at compile-time by
+    `fmt` and `with-fmt` macros. It is expected to return a piece of
+    code.
+-   `documentation` is the operation description string.
+
+For example, we can define a time formatting operation
+
+    (define-format-operation time
+        (:keywords (:time))
+        (:format (destination clause)
+         (destructuring-bind (_ timestamp &optional (format local-time:+iso-8601-format+)) clause
+             (declare (ignore _))
+             (let ((local-time (etypecase timestamp
+                     (integer
+                      (local-time:universal-to-timestamp timestamp))
+                     (local-time:timestamp
+                      timestamp))))
+               (local-time:format-timestring destination 
+                             local-time
+                             :format format))))
+        (:compile (destination clause)
+          (destructuring-bind (_ timestamp &optional (format 'local-time:+iso-8601-format+)) clause
+              (declare (ignore _))
+              (alexandria:with-unique-names (local-time)
+                (alexandria:once-only (timestamp)
+                `(let ((,local-time (etypecase ,timestamp
+                          (integer
+                           (local-time:universal-to-timestamp ,timestamp))
+                          (local-time:timestamp
+                           ,timestamp))))
+               (local-time:format-timestring ,destination 
+                             ,local-time
+                             :format ,format))))))
+        (:documentation "Time formatting"))
+
+And then we can use the new operation like this:
+
+    (fmt* nil `(:time ,(get-universal-time)))
+
+That goes through the operation's `:format` code.
+
+    (fmt nil (:time (get-universal-time)))
+
+Which transforms code using the operation's `:compile` code.
 
 Custom filters definition
 -------------------------
+
+Filters are defined via `define-format-filter` macro, very similarly to
+format operations.
+
+Syntax:
+
+    (define-format-filter filter-name
+       (:keywords keyword-list)
+       (:apply (arg)
+             &body body)
+       (:compile (arg)
+             &body body)
+       (:documentation docstring))
+
+Where:
+
+-   `keyword-list` is a list of keywords with which the filter can be
+    applied.
+-   `apply` is the function that is run at run-time for formatting with
+    `fmt*` function. `arg` is the argument to which apply the filter.
+-   `compile` is the code transformation triggered at compile-time by
+    `fmt` and `with-fmt` macros. It is expected to return a piece of
+    code.
+-   `documentation` is the operation description string.
+
+For example, the `:trim` filter is defined like this:
+
+    (define-format-filter trim
+       (:keywords (:trim))
+       (:apply (arg &rest chars)
+           (string-trim (or chars (list #\ )) arg))
+       (:compile (arg &rest chars)
+         (let ((chars-bag (or chars (list #\ ))))
+           `(string-trim ',chars-bag ,arg)))
+       (:documentation "String trim filter"))
+
+Filters can be used in `:a` and `:s` operations afterwards:
+
+    (fmt nil (:a "  hello  " :trim)) ;=> "hello"
+    (fmt nil (:a "//hello" (:trim #\/))) ;=> "hello"
