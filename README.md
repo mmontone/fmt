@@ -6,8 +6,8 @@ meant to do the same things Common Lisp **FORMAT** function does, but
 instead of using a control-string for formatting directives, it uses
 s-expressions.
 
-Invoking
-========
+Invocation
+==========
 
 with-fmt
 --------
@@ -23,12 +23,23 @@ A macro that expands its body to formatting commands.
 If no `destination` is given, then `*fmt-destination*` is the default
 destination.
 
+Body forms are either some lisp object, like strings, numbers,
+characters, etc; or some formatting operation. A formatting operation
+has the form of a list beggining with the operation keyword, like
+`(:aesthetic message)`, `(:join "," list)`, etc. Forms appearing in body
+are formatted one after the other.
+
 Example:
 
     (with-fmt ()
        "Hello world"
        #\newline
        (:join "," (list 1 2 3)))
+
+prints:
+
+    Hello world
+    1,2,3
 
 fmt
 ---
@@ -56,7 +67,7 @@ Example:
     (fmt* nil (if t `(:d ,22) `(:f ,23.44)))
 
 Note that some control flow operations (like `:do` and `:if` are not
-available in interpretive mode).
+available in interpreted mode).
 
 Printer operations
 ==================
@@ -90,8 +101,8 @@ returns `"(:FOO :BAR :BAZ)"`
 Special operations:
 ===================
 
-Escaping (:esc)
----------------
+Escaping (:esc and :fmt)
+------------------------
 
 Use the `:esc` directive for disabling formatting in a particular place.
 
@@ -106,24 +117,173 @@ completly, it is executed, but its result is not formatted. You can see
 that in the macroexpansion of the above code:
 
     (WITH-FMT-DESTINATION (#:STREAM925 NIL)
-      (MACROLET ((EMB (&REST CLAUSES)
+      (MACROLET ((:FMT (&REST CLAUSES)
                 `(FMT ,'#:STREAM925 ,@CLAUSES)))
       (WRITE-STRING "Hello" #:STREAM925)
       (WRITE-CHAR #\  #:STREAM925)
       (PROGN "beautiful" #\ )
       (WRITE-STRING "world" #:STREAM925)))
 
-This is useful in combination with the `emb` directive:
+This is useful in combination with the `:fmt` directive, that reenables
+formatting inside escaped forms:
 
     (fmt nil 
          (:a "start")
      #\newline
      (:esc 
        (loop for x in (list 1 2 3)
-       do (emb (:s x))))
+       do (:fmt (:s x))))
      #\newline
      (:a "end"))
 
 In the above example the output of the loop is not formatted as it is
-enclosed in an `:esc`; but the `emb` operation inside the loops makes
+enclosed in an `:esc`; but the `:fmt` operation inside the loops makes
 sure each of the elements of the list is formatted.
+
+Control flow operations
+=======================
+
+Conditional (:when and :if)
+---------------------------
+
+Conditional control flow can be controlled via `:when` and `:if`
+operations.
+
+`:when` is the simplest of the two and executes its body when the
+condition given is true.
+
+Syntax:
+
+    (:when <condition> &body body)
+
+Example:
+
+    (let ((cond t))
+        (fmt nil (:when cond "yes"))) ;=> "yes"
+
+    (let ((cond nil))
+     (fmt nil (:when cond "yes"))) ;=> ""
+
+`:if` has an `else` branch.
+
+Syntax:
+
+    (:if <condition> &body body)
+
+The `else` branch is indicated with the `:else` keyword.
+
+Example:
+
+    (let ((list (list 1 2 3)))
+      (is (equalp (fmt nil (:if (not list)
+                     "none"
+                     :else
+                     (:join "," list)))
+         "1,2,3"))) ;=> "1,2,3"
+
+     (let ((list (list)))
+       (is (equalp (fmt nil (:if (not list)
+                     "none"
+                     :else
+                     (:join "," list)))
+           "none"))) ;=> "none"
+
+Note: `:if` is not implemented in interpreter mode, so it cannot be used
+in `fmt*` function.
+
+Iteration (:do)
+---------------
+
+To iterate a list formatting its elements, there's the `:do` operation.
+
+Syntax:
+
+    (:do (<var> <list>) &body body)
+
+Example:
+
+    (fmt nil (:do (item (list 1 2 3))
+                  (:s item))) ;=> "123"
+
+Note: `:do` is not implemented in interpreter mode, so it cannot be used
+in `fmt*` function.
+
+Join (:join)
+------------
+
+Joins the elements of its list argument using a separator.
+
+Syntax:
+
+    (:join <separator> <list> &optional <format>)
+
+`separator` can be either be a character or a string. `list` is of
+course the list of elements to join. `format`, if present, is a command
+for formatting the list elements. If it is not present `:s` is used. `_`
+is bound to the list element.
+
+Example:
+
+    (fmt nil (:join ", " (list "foo" "bar" "baz"))) ;=> "foo, bar, baz"
+    (fmt nil (:join #\, (list "foo" "bar"))) ;=> "foo,bar"
+    (fmt nil (:join (", " " and ")
+                 (list "foo" "bar" "baz"))) ;=> "foo, bar and baz"
+    (fmt nil (:join ", " (list "a" "b" "c") (:a _ :up))) ;=> "A, B, C"
+
+Filters
+=======
+
+Filters are particular operations or functions that modify the input
+before it gets formatted.
+
+aesthetic and standard operations support filters.
+
+Filters appear at the end of the `:a` or `:s` operations:
+
+    (:a <arg> &rest filters)
+    (:s <arg> &rest filters)
+
+Filters can be either a function reference or some previously defined
+filter.
+
+Example:
+
+    (fmt nil (:a "foo" :upcase)) ;=> "FOO"
+    (fmt nil (:s "foo" #'string-upcase)) ;=> "FOO"
+    (fmt nil (:a "  foo  " (:trim #\ ) :up)) ;=> "FOO"
+
+Some very common filters are `:upcase` or `:up`, `:downcase` or `:down`,
+`:trim`, etc
+
+Radix control
+=============
+
+Radix (:r, :radix)
+------------------
+
+Prints argument in radix. Equivalent to [Common Lisp FORMAT's
+\~R](http://www.lispworks.com/documentation/lw50/CLHS/Body/22_cba.htm)
+
+Syntax::  
+(:r \<n\> &optional (\<interpretation\> :cardinal))
+
+`<interpretation>` can be `:cardinal`, `:ordinal`, `:roman` and
+`:old-roman`.
+
+Examples:
+
+    (fmt nil (:r 4)) ;=> "four"
+    (fmt nil (:r 4 :cardinal)) ;=> "four"
+    (fmt nil (:r 4 :ordinal)) ;=> "fourth"
+    (fmt nil (:r 4 2)) ;=> "100"
+    (fmt nil (:r 4 :roman)) ;=> "IV"
+    (fmt nil (:r 4 :old-roman)) ;=> "IIII"
+
+Extending FMT
+=============
+
+Custom operations definition
+----------------------------
+
+Custom filters definition
+-------------------------
