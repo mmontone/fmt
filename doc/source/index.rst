@@ -22,6 +22,8 @@ Overview
 Invocation
 ==========
 
+.. _with-fmt:
+
 with-fmt
 --------
 
@@ -53,6 +55,8 @@ prints::
    Hello world
    1,2,3
 
+.. _fmt:
+
 fmt
 ---
 
@@ -66,6 +70,8 @@ Example:
 
    (fmt nil "Hello" \#space "world")
    (fmt t (:s (list 1 2 3)))
+
+.. _fmt*:
 
 fmt*
 ----
@@ -86,6 +92,8 @@ Note that some control flow operations (like ``:do`` and ``:if`` are not availab
 Printer operations
 ==================
 
+.. _aesthetic:
+
 Aesthetic (:a, :aesthetic)
 --------------------------
 
@@ -98,6 +106,8 @@ Example:
      (fmt nil (:a (list :foo :bar :baz)))
 
 returns ``"(FOO BAR BAZ)"``
+
+.. _standard:
 
 Standard (:s, :std, :standard)
 ------------------------------
@@ -115,6 +125,8 @@ returns ``"(:FOO :BAR :BAZ)"``
 
 Special operations:
 ===================
+
+.. _escaping:
 
 Escaping (:esc and :fmt)
 ------------------------
@@ -158,6 +170,8 @@ In the above example the output of the loop is not formatted as it is enclosed i
 
 Control flow operations
 =======================
+
+.. _conditional:
 
 Conditional (:when and :if)
 ---------------------------
@@ -208,6 +222,7 @@ Example:
 
 Note: ``:if`` is not implemented in interpreter mode, so it cannot be used in ``fmt*`` function.
 
+.. _iteration:
 
 Iteration (:do)
 ---------------
@@ -229,6 +244,27 @@ Note: ``:do`` is not implemented in interpreter mode, so it cannot be used in ``
 
 Filters
 =======
+
+Filters are particular operations or functions that modify the input before it gets formatted.
+
+:ref:`aesthetic` and :ref:`standard` operations support filters.
+
+Filters appear at the end of the ``:a`` or ``:s`` operations::
+
+  (:a <arg> &rest filters)
+  (:s <arg> &rest filters)
+
+Filters can be either a function reference or some previously defined filter. 
+
+Example:
+
+.. code-block:: common-lisp
+
+     (fmt nil (:a "foo" :upcase)) ;=> "FOO"
+     (fmt nil (:s "foo" #'string-upcase)) ;=> "FOO"
+     (fmt nil (:a "  foo  " (:trim #\ ) :up)) ;=> "FOO"
+
+Some very common filters are ``:upcase`` or ``:up``, ``:downcase`` or ``:down``, ``:trim``, etc
 
 Radix control
 =============
