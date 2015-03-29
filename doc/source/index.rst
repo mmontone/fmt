@@ -37,6 +37,8 @@ A macro that expands its body to formatting commands.
 
 If no ``destination`` is given, then ``*fmt-destination*`` is the default destination.
 
+Body forms are either some lisp object, like strings, numbers, characters, etc; or some formatting operation. A formatting operation has the form of a list beggining with the operation keyword, like ``(:aesthetic message)``, ``(:join "," list)``, etc. Forms appearing in body are formatted one after the other.
+
 Example:
 
 .. code-block:: common-lisp
@@ -45,6 +47,11 @@ Example:
       "Hello world"
       #\newline
       (:join "," (list 1 2 3)))
+
+prints::
+
+   Hello world
+   1,2,3
 
 fmt
 ---
@@ -74,7 +81,7 @@ Example:
      (fmt* nil "Hello" #\space "world")
      (fmt* nil (if t `(:d ,22) `(:f ,23.44)))
 
-Note that some control flow operations (like ``:do`` and ``:if`` are not available in interpretive mode).
+Note that some control flow operations (like ``:do`` and ``:if`` are not available in interpreted mode).
 
 Printer operations
 ==================
@@ -109,7 +116,7 @@ returns ``"(:FOO :BAR :BAZ)"``
 Special operations:
 ===================
 
-Escaping (:esc)
+Escaping (:esc and :fmt)
 ---------------
 
 Use the ``:esc`` directive for disabling formatting in a particular place.
@@ -127,14 +134,14 @@ It's important to note that the code inside :esc is not removed completly, it is
 .. code-block:: common-lisp
    
      (WITH-FMT-DESTINATION (#:STREAM925 NIL)
-       (MACROLET ((EMB (&REST CLAUSES)
+       (MACROLET ((:FMT (&REST CLAUSES)
                  `(FMT ,'#:STREAM925 ,@CLAUSES)))
        (WRITE-STRING "Hello" #:STREAM925)
        (WRITE-CHAR #\  #:STREAM925)
        (PROGN "beautiful" #\ )
        (WRITE-STRING "world" #:STREAM925)))
 
-This is useful in combination with the ``emb`` directive:
+This is useful in combination with the ``:fmt`` directive, that reenables formatting inside escaped forms:
 
 .. code-block:: common-lisp
 
@@ -143,12 +150,41 @@ This is useful in combination with the ``emb`` directive:
 	  #\newline
 	  (:esc 
 	    (loop for x in (list 1 2 3)
-	 	do (emb (:s x))))
+	 	do (:fmt (:s x))))
 	  #\newline
 	  (:a "end"))
 
-In the above example the output of the loop is not formatted as it is enclosed in an ``:esc``; but the ``emb`` operation inside the loops makes sure each of the elements of the list is formatted.
+In the above example the output of the loop is not formatted as it is enclosed in an ``:esc``; but the ``:fmt`` operation inside the loops makes sure each of the elements of the list is formatted.
 
+Control flow operations
+=======================
+
+Filters
+=======
+
+Radix control
+=============
+
+Radix (:r, :radix)
+------------------
+
+Prints argument in radix. Equivalent to `Common Lisp FORMAT's ~R <http://www.lispworks.com/documentation/lw50/CLHS/Body/22_cba.htm>`_
+
+Syntax::
+  (:r <n> &optional (<interpretation> :cardinal))
+
+``<interpretation>`` can be ``:cardinal``, ``:ordinal``, ``:roman`` and ``:old-roman``.
+
+Examples:
+
+.. code-block:: common-lisp
+   
+   (fmt nil (:r 4)) ;=> "four"
+   (fmt nil (:r 4 :cardinal)) ;=> "four"
+   (fmt nil (:r 4 :ordinal)) ;=> "fourth"
+   (fmt nil (:r 4 2)) ;=> "100"
+   (fmt nil (:r 4 :roman)) ;=> "IV"
+   (fmt nil (:r 4 :old-roman)) ;=> "IIII"
 
 Indices and tables
 ==================
