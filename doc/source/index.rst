@@ -123,8 +123,8 @@ Example:
 returns ``"(:FOO :BAR :BAZ)"``
 
 
-Special operations:
-===================
+Special operations
+==================
 
 .. _escaping:
 
