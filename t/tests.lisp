@@ -217,3 +217,11 @@ end")))
 	      "     "))
   (is (equalp (fmt* nil `(:times #\a 6))
 	      "aaaaaa")))
+
+(test cl-format-test
+  (let ((list (list "foo" "bar" "baz")))
+    (is (equalp (fmt nil (:format "~{~A~^, ~}" list))
+		(fmt nil (:join ", " list)))))
+  (let ((list (list :foo :bar :baz)))
+    (is (equalp (fmt nil (:format "~{~S~^, ~}" list))
+		(fmt nil (:join ", " list (:s _)))))))

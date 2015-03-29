@@ -182,7 +182,7 @@ Conditional control flow can be controlled via ``:when`` and ``:if`` operations.
 
 Syntax::
   
-  (:when <condition> &body body)
+  (:when condition &body body)
 
 Example:
 
@@ -198,7 +198,7 @@ Example:
 
 Syntax::
 
-  (:if <condition> &body body)
+  (:if condition &body body)
 
 The ``else`` branch is indicated with the ``:else`` keyword. 
 
@@ -207,18 +207,16 @@ Example:
 .. code-block:: common-lisp
 
    (let ((list (list 1 2 3)))
-     (is (equalp (fmt nil (:if (not list)
- 	 		        "none"
-			        :else
-			        (:join "," list)))
-		"1,2,3"))) ;=> "1,2,3"
+     (fmt nil (:if (not list)
+                    "none"
+		    :else
+		    (:join "," list)))) ;=> "1,2,3"
 
     (let ((list (list)))
-      (is (equalp (fmt nil (:if (not list)
-			        "none"
-			        :else
-			        (:join "," list)))
-		  "none"))) ;=> "none"
+      (fmt nil (:if (not list)
+		     "none"
+		     :else
+		     (:join "," list)))) ;=> "none"
 
 Note: ``:if`` is not implemented in interpreter mode, so it cannot be used in ``fmt*`` function.
 
@@ -231,7 +229,7 @@ To iterate a list formatting its elements, there's the ``:do`` operation.
 
 Syntax::
   
-  (:do (<var> <list>) &body body)
+  (:do (var list) &body body)
 
 Example:
 
@@ -249,13 +247,16 @@ Repeat formatting N number of times
 
 Syntax::
 
-  (:times <clause> <n>)
+  (:times clause n)
 
 Example:
 
 .. code-block:: common-lisp
 
    (fmt nil (:times #\newline 5))
+
+Other operations
+================
 
 Join (:join)
 ------------
@@ -264,7 +265,7 @@ Joins the elements of its list argument using a separator.
 
 Syntax::
   
-  (:join <separator> <list> &optional <format>)
+  (:join separator list &optional format)
 
 ``separator`` can be either be a character or a string.
 ``list`` is of course the list of elements to join.
@@ -280,6 +281,25 @@ Example:
                 (list "foo" "bar" "baz"))) ;=> "foo, bar and baz"
    (fmt nil (:join ", " (list "a" "b" "c") (:a _ :up))) ;=> "A, B, C"
 
+Common Lisp format (:format)
+----------------------------
+
+It is possible to just invoke Common Lisp format function to write on the current destination.
+
+Syntax::
+
+  (:format control-string &rest args)
+
+Example:
+
+.. code-block:: common-lisp
+
+   (let ((list (list "foo" "bar" "baz")))
+    (fmt nil (:format "~{~A~^, ~}" list))) ;=> "foo, bar, baz"
+
+   (let ((list (list :foo :bar :baz)))
+    (fmt nil (:format "~{~S~^, ~}" list))) ;=> ":FOO, :BAR, :BAZ"
+
 Filters
 =======
 
@@ -289,8 +309,8 @@ Filters are particular operations or functions that modify the input before it g
 
 Filters appear at the end of the ``:a`` or ``:s`` operations::
 
-  (:a <arg> &rest filters)
-  (:s <arg> &rest filters)
+  (:a arg &rest filters)
+  (:s arg &rest filters)
 
 Filters can be either a function reference or some previously defined filter. 
 
@@ -313,9 +333,9 @@ Radix (:r, :radix)
 Prints argument in radix. Equivalent to `Common Lisp FORMAT's ~R <http://www.lispworks.com/documentation/lw50/CLHS/Body/22_cba.htm>`_
 
 Syntax::
-  (:r <n> &optional (<interpretation> :cardinal))
+  (:r n &optional (interpretation :cardinal))
 
-``<interpretation>`` can be ``:cardinal``, ``:ordinal``, ``:roman`` and ``:old-roman``.
+``interpretation`` can be ``:cardinal``, ``:ordinal``, ``:roman`` and ``:old-roman``.
 
 Examples:
 
