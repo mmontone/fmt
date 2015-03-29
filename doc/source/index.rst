@@ -368,8 +368,74 @@ Examples:
 Extending FMT
 =============
 
-Custom operations definition
-----------------------------
+Custom formatting operations definition
+---------------------------------------
+
+Custom formatting operations can be defined via ``define-format-operation`` macro.
+
+It has the following syntax::
+
+  (define-format-operation operation-name
+     (:keywords keyword-list)
+     (:format (destination clause)
+           &body body)
+     (:compile (destination clause)
+           &body body)
+     (:documentation docstring))
+
+Where:
+
+* ``keyword-list`` is a list of keywords with which the formatting operation can be invoked.
+* ``format`` is the function that is run at run-time for formatting with ``fmt*`` function. ``destination`` is the current formatting destination, and ``clause`` is the whole format clause.
+* ``compile`` is the code transformation triggered at compile-time by ``fmt`` and ``with-fmt`` macros. It is expected to return a piece of code.
+* ``documentation`` is the operation description string.
+
+For example, we can define a time formatting operation
+
+.. code-block:: common-lisp
+
+   (define-format-operation time
+       (:keywords (:time))
+       (:format (destination clause)
+		(destructuring-bind (_ timestamp &optional (format local-time:+iso-8601-format+)) clause
+		    (declare (ignore _))
+		    (let ((local-time (etypecase timestamp
+					(integer
+					 (local-time:universal-to-timestamp timestamp))
+					(local-time:timestamp
+					 timestamp))))
+		      (local-time:format-timestring destination 
+						    local-time
+						    :format format))))
+       (:compile (destination clause)
+		 (destructuring-bind (_ timestamp &optional (format 'local-time:+iso-8601-format+)) clause
+		     (declare (ignore _))
+		     (alexandria:with-unique-names (local-time)
+		       (alexandria:once-only (timestamp)
+		       `(let ((,local-time (etypecase ,timestamp
+					     (integer
+					      (local-time:universal-to-timestamp ,timestamp))
+					     (local-time:timestamp
+					      ,timestamp))))
+			  (local-time:format-timestring ,destination 
+							,local-time
+							:format ,format))))))
+       (:documentation "Time formatting"))
+
+And then we can use the new operation like this:
+
+.. code-block:: common-lisp
+
+   (fmt* nil `(:time ,(get-universal-time)))
+
+That goes through the operation's ``:format`` code.
+
+.. code-block:: common-lisp
+
+   (fmt nil (:time (get-universal-time)))
+
+Which transforms code using the operation's ``:compile`` code.
+
 
 Custom filters definition
 -------------------------
