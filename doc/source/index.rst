@@ -19,8 +19,8 @@ Overview
 
 **FMT** is an extensible text formatting facility for Common Lisp. It is meant to do the same things Common Lisp **FORMAT** function does, but instead of using a control-string for formatting directives, it uses s-expressions.
 
-Invoking
-========
+Invocation
+==========
 
 with-fmt
 --------
@@ -117,7 +117,7 @@ Special operations:
 ===================
 
 Escaping (:esc and :fmt)
----------------
+------------------------
 
 Use the ``:esc`` directive for disabling formatting in a particular place.
 
@@ -159,6 +159,74 @@ In the above example the output of the loop is not formatted as it is enclosed i
 Control flow operations
 =======================
 
+Conditional (:when and :if)
+---------------------------
+
+Conditional control flow can be controlled via ``:when`` and ``:if`` operations.
+
+``:when`` is the simplest of the two and executes its body when the condition given is true.
+
+Syntax::
+  
+  (:when <condition> &body body)
+
+Example:
+
+.. code-block:: common-lisp
+
+   (let ((cond t))
+       (fmt nil (:when cond "yes"))) ;=> "yes"
+
+   (let ((cond nil))
+    (fmt nil (:when cond "yes"))) ;=> ""
+
+``:if`` has an ``else`` branch.
+
+Syntax::
+
+  (:if <condition> &body body)
+
+The ``else`` branch is indicated with the ``:else`` keyword. 
+
+Example:
+
+.. code-block:: common-lisp
+
+   (let ((list (list 1 2 3)))
+     (is (equalp (fmt nil (:if (not list)
+ 	 		        "none"
+			        :else
+			        (:join "," list)))
+		"1,2,3"))) ;=> "1,2,3"
+
+    (let ((list (list)))
+      (is (equalp (fmt nil (:if (not list)
+			        "none"
+			        :else
+			        (:join "," list)))
+		  "none"))) ;=> "none"
+
+Note: ``:if`` is not implemented in interpreter mode, so it cannot be used in ``fmt*`` function.
+
+
+Iteration (:do)
+---------------
+
+To iterate a list formatting its elements, there's the ``:do`` operation.
+
+Syntax::
+  
+  (:do (<var> <list>) &body body)
+
+Example:
+
+.. code-block:: common-lisp
+
+    (fmt nil (:do (item (list 1 2 3))
+                  (:s item))) ;=> "123"
+
+Note: ``:do`` is not implemented in interpreter mode, so it cannot be used in ``fmt*`` function.
+
 Filters
 =======
 
@@ -185,6 +253,15 @@ Examples:
    (fmt nil (:r 4 2)) ;=> "100"
    (fmt nil (:r 4 :roman)) ;=> "IV"
    (fmt nil (:r 4 :old-roman)) ;=> "IIII"
+
+Extending FMT
+=============
+
+Custom operations definition
+----------------------------
+
+Custom filters definition
+-------------------------
 
 Indices and tables
 ==================
