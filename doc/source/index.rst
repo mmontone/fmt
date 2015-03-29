@@ -255,6 +255,22 @@ Example:
 
    (fmt nil (:times #\newline 5))
 
+More complex control flow
+=========================
+
+Just use lisp with ``:esc`` and ``:fmt`` for more complex control flow.
+
+Example:
+
+.. code-block:: common-lisp
+
+(let ((list (list 1 2 3)))
+  (fmt nil (:esc (if (not list)
+                     (:fmt "No elements")
+                     (loop for x in (butlast list)
+                        do (:fmt (:a x) "; ")
+                        finally (:fmt (:a (car (last list)))))))))           
+
 Other operations
 ================
 
@@ -333,6 +349,7 @@ Radix (:r, :radix)
 Prints argument in radix. Equivalent to `Common Lisp FORMAT's ~R <http://www.lispworks.com/documentation/lw50/CLHS/Body/22_cba.htm>`_
 
 Syntax::
+
   (:r n &optional (interpretation :cardinal))
 
 ``interpretation`` can be ``:cardinal``, ``:ordinal``, ``:roman`` and ``:old-roman``.
