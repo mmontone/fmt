@@ -118,7 +118,7 @@ world")))
 		   #\newline
 		   (:esc 
 		    (loop for x in (list 1 2 3)
-			do (:emb (:s x))))
+			do (:fmt (:s x))))
 		   #\newline
 		   (:a "end"))
 	      "start

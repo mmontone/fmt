@@ -29,7 +29,7 @@
   "Format clauses in BODY to DESTINATION"
   (alexandria:with-unique-names (stream)
     `(with-fmt-destination (,stream ,destination)
-       (macrolet ((:emb (&rest clauses)
+       (macrolet ((:fmt (&rest clauses)
 		    `(fmt ,',stream ,@clauses)))
 	 ,@(loop for clause in body
 	      collect
@@ -38,7 +38,7 @@
 (defmacro fmt (destination &rest clauses)
   (alexandria:with-unique-names (stream)
     `(with-fmt-destination (,stream ,destination)
-       (macrolet ((:emb (&rest clauses)
+       (macrolet ((:fmt (&rest clauses)
 		    `(fmt ,',stream ,@clauses)))
 	 ,@(loop for clause in clauses
 	      collect
