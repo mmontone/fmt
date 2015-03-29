@@ -3,5 +3,7 @@
   (:export :fmt
 	   :fmt*
 	   :with-fmt
-	   :emb))
+	   :emb
+	   :define-format-operation
+	   :define-format-filter))
 

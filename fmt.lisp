@@ -76,6 +76,7 @@
   documentation)
 
 (defmacro define-format-operation (name &body options)
+  "Defines a new format operation"
   (flet ((extract-option (name)
            (cdr (find name options :key #'car))))
     (alexandria:with-unique-names (format-operation)
@@ -106,6 +107,7 @@
   documentation)
 
 (defmacro define-format-filter (name &body options)
+  "Defines a new format filter"
   (flet ((extract-option (name)
            (cdr (find name options :key #'car))))
     (alexandria:with-unique-names (format-filter)
