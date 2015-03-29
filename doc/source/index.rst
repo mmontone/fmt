@@ -440,6 +440,46 @@ Which transforms code using the operation's ``:compile`` code.
 Custom filters definition
 -------------------------
 
+Filters are defined via ``define-format-filter`` macro, very similarly to format operations.
+
+Syntax::
+
+  (define-format-filter filter-name
+     (:keywords keyword-list)
+     (:apply (arg)
+           &body body)
+     (:compile (arg)
+           &body body)
+     (:documentation docstring))
+
+Where:
+
+* ``keyword-list`` is a list of keywords with which the filter can be applied.
+* ``apply`` is the function that is run at run-time for formatting with ``fmt*`` function. ``arg`` is the argument to which apply the filter.
+* ``compile`` is the code transformation triggered at compile-time by ``fmt`` and ``with-fmt`` macros. It is expected to return a piece of code.
+* ``documentation`` is the operation description string.
+
+For example, the ``:trim`` filter is defined like this:
+
+.. code-block:: common-lisp
+
+   (define-format-filter trim
+      (:keywords (:trim))
+      (:apply (arg &rest chars)
+	      (string-trim (or chars (list #\ )) arg))
+      (:compile (arg &rest chars)
+		(let ((chars-bag (or chars (list #\ ))))
+		  `(string-trim ',chars-bag ,arg)))
+      (:documentation "String trim filter"))
+
+Filters can be used in ``:a`` and ``:s`` operations afterwards:
+
+.. code-block:: common-lisp
+
+   (fmt nil (:a "  hello  " :trim)) ;=> "hello"
+   (fmt nil (:a "//hello" (:trim #\/))) ;=> "hello"   
+
+
 Indices and tables
 ==================
 
