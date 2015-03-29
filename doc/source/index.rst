@@ -242,6 +242,29 @@ Example:
 
 Note: ``:do`` is not implemented in interpreter mode, so it cannot be used in ``fmt*`` function.
 
+Join (:join)
+------------
+
+Joins the elements of its list argument using a separator.
+
+Syntax::
+  
+  (:join <separator> <list> &optional <format>)
+
+``separator`` can be either be a character or a string.
+``list`` is of course the list of elements to join.
+``format``, if present, is a command for formatting the list elements. If it is not present ``:s`` is used. ``_`` is bound to the list element.
+
+Example:
+
+.. code-block:: common-lisp
+
+   (fmt nil (:join ", " (list "foo" "bar" "baz"))) ;=> "foo, bar, baz"
+   (fmt nil (:join #\, (list "foo" "bar"))) ;=> "foo,bar"
+   (fmt nil (:join (", " " and ")
+                (list "foo" "bar" "baz"))) ;=> "foo, bar and baz"
+   (fmt nil (:join ", " (list "a" "b" "c") (:a _ :up))) ;=> "A, B, C"
+
 Filters
 =======
 
