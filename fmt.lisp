@@ -170,6 +170,14 @@
             `(string-downcase ,arg))
   (:documentation "String downcase"))
 
+(define-format-filter capitalize
+  (:keywords (:capitalize))
+  (:apply (arg)
+          (string-capitalize arg))
+  (:compile (arg)
+            `(string-capitalize ,arg))
+  (:documentation "String capitalize"))
+
 (define-format-filter trim
   (:keywords (:trim))
   (:apply (arg &rest chars)
