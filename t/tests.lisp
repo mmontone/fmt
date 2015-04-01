@@ -105,6 +105,14 @@ world")))
   (is (equalp (fmt nil (:a nil (:default "bar")))
 	      "bar")))
 
+(test truncate-filter-test
+  (is (equalp (fmt nil (:a "lalalala" (:truncate 10)))
+	      "lalalala"))
+  (is (equalp (fmt nil (:a "lalalala" (:truncate 4)))
+	      "lala..."))
+  (is (equalp (fmt nil (:a "lalalala" (:truncate 6 ", etc")))
+	      "lalala, etc")))
+
 (test escape-test
   (is (equalp (fmt nil
 		   "hello"

@@ -195,6 +195,18 @@
             `(or ,arg ,default))
   (:documentation "Default value filter"))
 
+(define-format-filter truncate
+  (:keywords (:truncate))
+  (:apply (arg n &optional (rest "..."))
+          (if (> (length arg) n)
+              (concatenate 'string (subseq arg 0 n) rest)
+              arg))
+  (:compile (arg n &optional (rest "..."))
+            `(if (> (length ,arg) ,n)
+                 (concatenate 'string (subseq ,arg 0 ,n) ,rest)
+                 ,arg))
+  (:documentation "Truncate filter"))
+
 (defgeneric format-clause (destination clause))
 
 (defmethod format-clause :around (destination clause)
@@ -244,7 +256,7 @@
   (:keywords (:s :std :standard))
   (:format (destination clause)
            (destructuring-bind (_ arg &rest filters) clause
-	     (declare (ignore _))
+             (declare (ignore _))
              (let ((arg (read-arg arg)))
                (loop for filter in filters
                   do (setf arg (apply-format-filter filter arg)))
@@ -252,7 +264,7 @@
   (:compile (destination clause)
             (alexandria:with-unique-names (read-arg)
               (destructuring-bind (_ arg &rest filters) clause
-		(declare (ignore _))
+                (declare (ignore _))
                 `(let ((,read-arg (read-arg ,arg)))
                    ,@(loop for filter in filters
                         collect `(setf ,read-arg ,(compile-format-filter filter read-arg)))
@@ -263,7 +275,7 @@
   (:keywords (:a :aesthetic))
   (:format (destination clause)
            (destructuring-bind (_ arg &rest filters) clause
-	     (declare (ignore _))
+             (declare (ignore _))
              (let ((arg (read-arg arg)))
                (loop for filter in filters
                   do (setf arg (apply-format-filter filter arg)))
@@ -271,7 +283,7 @@
   (:compile (destination clause)
             (alexandria:with-unique-names (read-arg)
               (destructuring-bind (_ arg &rest filters) clause
-		(declare (ignore _))
+                (declare (ignore _))
                 `(let ((,read-arg (read-arg ,arg)))
                    ,@(loop for filter in filters
                         collect `(setf ,read-arg ,(compile-format-filter filter read-arg)))
@@ -282,13 +294,13 @@
   (:keywords (:w :when))
   (:format (destination clause)
            (destructuring-bind (_ condition &rest body) clause
-	     (declare (ignore _))
+             (declare (ignore _))
              (when condition
                (loop for clause in body
                   do (format-clause destination clause)))))
   (:compile (destination clause)
             (destructuring-bind (_ condition &rest body) clause
-	      (declare (ignore _))
+              (declare (ignore _))
               `(when ,condition
                  ,@(loop for clause in body
                       collect (compile-clause destination clause)))))
@@ -298,7 +310,7 @@
   (:keywords (:+ :j :join :concat :slice))
   (:format (destination clause)
            (destructuring-bind (_ separator args &optional format) clause
-	     (declare (ignore _))
+             (declare (ignore _))
              (multiple-value-bind (separator last-separator)
                  (if (listp separator)
                      (values (first separator)
@@ -328,7 +340,7 @@
                                 (format-clause destination arg))))))))))
   (:compile (destination clause)
             (destructuring-bind (_ separator args &optional format) clause
-	      (declare (ignore _))
+              (declare (ignore _))
               (alexandria:with-unique-names (arg)
                 (alexandria:once-only (args)
                   (multiple-value-bind (separator last-separator)
@@ -364,11 +376,11 @@
   (:keywords (:format))
   (:format (destination clause)
            (destructuring-bind (_ control-string &rest args) clause
-	     (declare (ignore _))
+             (declare (ignore _))
              (apply #'format destination control-string args)))
   (:compile (destination clause)
             (destructuring-bind (_ control-string &rest args) clause
-	      (declare (ignore _))
+              (declare (ignore _))
               `(format ,destination ,control-string ,@args)))
   (:documentation "Format using Common Lisp format function"))
 
