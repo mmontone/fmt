@@ -187,6 +187,14 @@
               `(string-trim ',chars-bag ,arg)))
   (:documentation "String trim filter"))
 
+(define-format-filter default
+  (:keywords (:default))
+  (:apply (arg default)
+          (or arg default))
+  (:compile (arg default)
+            `(or ,arg ,default))
+  (:documentation "Default value filter"))
+
 (defgeneric format-clause (destination clause))
 
 (defmethod format-clause :around (destination clause)

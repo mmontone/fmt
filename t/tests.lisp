@@ -99,6 +99,12 @@ world")))
   (is (equalp (fmt* nil `(:a "lala" #'string-upcase))
 	      "LALA")))
 
+(test default-filter-test
+  (is (equalp (fmt nil (:a "foo" (:default "bar")))
+	      "foo"))
+  (is (equalp (fmt nil (:a nil (:default "bar")))
+	      "bar")))
+
 (test escape-test
   (is (equalp (fmt nil
 		   "hello"
