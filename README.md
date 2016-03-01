@@ -1,6 +1,9 @@
 FMT
 ===
 
+[![Quicklisp](http://quickdocs.org/badge/fmt.svg)](http://quickdocs.org/fmt/)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+
 **FMT** is an extensible text formatting facility for Common Lisp. It is
 meant to do the same things Common Lisp **FORMAT** function does, but
 instead of using a control-string for formatting directives, it uses
