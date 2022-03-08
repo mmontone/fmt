@@ -33,8 +33,8 @@
          (macrolet ((:fmt (&rest clauses)
                       `(fmt ,',stream ,@clauses)))
            ,@(loop for clause in body
-                collect
-                  (compile-clause stream clause)))))))
+                   collect
+                   (compile-clause stream clause)))))))
 
 (defmacro fmt (destination &rest clauses)
   (alexandria:with-unique-names (stream)
@@ -42,8 +42,8 @@
        (macrolet ((:fmt (&rest clauses)
                     `(fmt ,',stream ,@clauses)))
          ,@(loop for clause in clauses
-              collect
-                (compile-clause stream clause))))))
+                 collect
+                 (compile-clause stream clause))))))
 
 (defun fmt* (&optional (destination *fmt-destination*) &rest clauses)
   (apply #'call-with-fmt-destination
@@ -51,7 +51,7 @@
 
 (defun %fmt* (destination &rest clauses)
   (loop for clause in clauses
-     do (format-clause destination clause)))
+        do (format-clause destination clause)))
 
 ;; Special arguments
 
@@ -84,15 +84,15 @@
                                  :name ',name
                                  :keywords ',(first (extract-option :keywords))
                                  :format ,(let ((format (extract-option :format)))
-                                               `(lambda ,(first format)
-                                                  ,@(rest format)))
+                                            `(lambda ,(first format)
+                                               ,@(rest format)))
                                  :compile ,(let ((compile (extract-option :compile)))
-                                                `(lambda ,(first compile)
-                                                   ,@(rest compile)))
+                                             `(lambda ,(first compile)
+                                                ,@(rest compile)))
                                  :documentation ,(first (extract-option :documentation)))))
          ,@(loop for keyword in (first (extract-option :keywords))
-              collect `(setf (gethash ,keyword *format-operations*)
-                             ,format-operation))))))
+                 collect `(setf (gethash ,keyword *format-operations*)
+                                ,format-operation))))))
 
 (defun find-format-operation (keyword)
   (gethash keyword *format-operations*))
@@ -115,20 +115,20 @@
                               :name ',name
                               :keywords ',(first (extract-option :keywords))
                               :apply ,(let ((apply (extract-option :apply)))
-                                           `(lambda ,(first apply)
-                                              ,@(rest apply)))
+                                        `(lambda ,(first apply)
+                                           ,@(rest apply)))
                               :compile ,(let ((compile (extract-option :compile)))
-                                             `(lambda ,(first compile)
-                                                ,@(rest compile)))
+                                          `(lambda ,(first compile)
+                                             ,@(rest compile)))
                               :documentation ,(first (extract-option :documentation)))))
          ,@(loop for keyword in (first (extract-option :keywords))
-              collect `(setf (gethash ,keyword *format-filters*)
-                             ,format-filter))))))
+                 collect `(setf (gethash ,keyword *format-filters*)
+                                ,format-filter))))))
 
 (defun find-format-filter (keyword &optional (error-p t))
   (or
    (gethash keyword *format-filters*)
-   (error "Invalid filter: ~S" keyword)))
+   (and error-p (error "Invalid filter: ~S" keyword))))
 
 (defun apply-format-filter (keyword-or-cons arg)
   (etypecase keyword-or-cons
@@ -208,26 +208,26 @@
   (:documentation "Truncate filter"))
 
 (defun replace-all (string part replacement &key (test #'char=))
-  "Returns a new string in which all the occurences of the part 
+  "Returns a new string in which all the occurences of the part
 is replaced with replacement."
   (with-output-to-string (out)
     (loop with part-length = (length part)
-       for old-pos = 0 then (+ pos part-length)
-       for pos = (search part string
-			 :start2 old-pos
-			 :test test)
-       do (write-string string out
-			:start old-pos
-			:end (or pos (length string)))
-       when pos do (write-string replacement out)
-       while pos)))
+          for old-pos = 0 then (+ pos part-length)
+          for pos = (search part string
+                            :start2 old-pos
+                            :test test)
+          do (write-string string out
+                           :start old-pos
+                           :end (or pos (length string)))
+          when pos do (write-string replacement out)
+            while pos)))
 
 (define-format-filter replace
   (:keywords (:replace))
   (:apply (arg part replacement)
           (replace-all arg part replacement))
   (:compile (arg part replacement)
-	    `(replace-all ,arg ,part ,replacement))
+            `(replace-all ,arg ,part ,replacement))
   (:documentation "Replace filter"))
 
 (defgeneric format-clause (destination clause))
@@ -282,7 +282,7 @@ is replaced with replacement."
              (declare (ignore _))
              (let ((arg (read-arg arg)))
                (loop for filter in filters
-                  do (setf arg (apply-format-filter filter arg)))
+                     do (setf arg (apply-format-filter filter arg)))
                (prin1 arg destination))))
   (:compile (destination clause)
             (alexandria:with-unique-names (read-arg)
@@ -290,7 +290,7 @@ is replaced with replacement."
                 (declare (ignore _))
                 `(let ((,read-arg (read-arg ,arg)))
                    ,@(loop for filter in filters
-                        collect `(setf ,read-arg ,(compile-format-filter filter read-arg)))
+                           collect `(setf ,read-arg ,(compile-format-filter filter read-arg)))
                    (prin1 ,read-arg ,destination)))))
   (:documentation "Standard print"))
 
@@ -301,7 +301,7 @@ is replaced with replacement."
              (declare (ignore _))
              (let ((arg (read-arg arg)))
                (loop for filter in filters
-                  do (setf arg (apply-format-filter filter arg)))
+                     do (setf arg (apply-format-filter filter arg)))
                (princ arg destination))))
   (:compile (destination clause)
             (alexandria:with-unique-names (read-arg)
@@ -309,7 +309,7 @@ is replaced with replacement."
                 (declare (ignore _))
                 `(let ((,read-arg (read-arg ,arg)))
                    ,@(loop for filter in filters
-                        collect `(setf ,read-arg ,(compile-format-filter filter read-arg)))
+                           collect `(setf ,read-arg ,(compile-format-filter filter read-arg)))
                    (princ ,read-arg ,destination)))))
   (:documentation "Aesthetic print"))
 
@@ -320,13 +320,13 @@ is replaced with replacement."
              (declare (ignore _))
              (when condition
                (loop for clause in body
-                  do (format-clause destination clause)))))
+                     do (format-clause destination clause)))))
   (:compile (destination clause)
             (destructuring-bind (_ condition &rest body) clause
               (declare (ignore _))
               `(when ,condition
                  ,@(loop for clause in body
-                      collect (compile-clause destination clause)))))
+                         collect (compile-clause destination clause)))))
   (:documentation "Format iff condition is true"))
 
 (define-format-operation join
@@ -347,14 +347,14 @@ is replaced with replacement."
                        (format-clause destination arg))
                    (when (cdr args)
                      (loop
-                        for arg in (butlast (cdr args))
-                        do
+                       for arg in (butlast (cdr args))
+                       do
                           (format-clause destination separator)
                           (if format
                               (let ((*_* arg))
                                 (format-clause destination format))
                               (format-clause destination arg))
-                        finally
+                       finally
                           (format-clause destination last-separator)
                           (let ((arg (car (last args))))
                             (if format
@@ -379,14 +379,14 @@ is replaced with replacement."
                               `(format-clause ,destination ,arg)))
                        (when (cdr ,args)
                          (loop
-                            for ,arg in (butlast (cdr ,args))
-                            do
+                           for ,arg in (butlast (cdr ,args))
+                           do
                               (format-clause ,destination ,separator)
-                              ,(if format
-                                   `(let ((*_* ,arg))
-                                      (format-clause ,destination ',format))
-                                   `(format-clause ,destination ,arg))
-                            finally
+                           ,(if format
+                                `(let ((*_* ,arg))
+                                   (format-clause ,destination ',format))
+                                `(format-clause ,destination ,arg))
+                           finally
                               (format-clause ,destination ,last-separator)
                               (let ((,arg (car (last ,args))))
                                 ,(if format
@@ -410,15 +410,16 @@ is replaced with replacement."
 (define-format-operation do
   (:keywords (:do))
   (:format (destination clause)
+           (declare (ignore destination clause))
            (error "No interpreted :do operation"))
   (:compile (destination clause)
             (destructuring-bind (_ (var list) &body clauses) clause
               (declare (ignore _))
               `(loop
-                  :for ,var :in ,list
-                  :do
-                  ,@(loop for clause in clauses
-                       collect (compile-clause destination clause)))))
+                 :for ,var :in ,list
+                 :do
+                 ,@(loop for clause in clauses
+                         collect (compile-clause destination clause)))))
   (:documentation "Iteration operation"))
 
 (define-format-operation escape
@@ -426,8 +427,9 @@ is replaced with replacement."
   (:format (destination clause)
            (let ((*escape* t))
              (loop for clause in (rest clause)
-                do (format-clause destination clause))))
+                   do (format-clause destination clause))))
   (:compile (destination clause)
+            (declare (ignore destination))
             `(progn ,@(rest clause)))
   (:documentation "Escape clauses formatting"))
 
@@ -505,13 +507,13 @@ is replaced with replacement."
   (:keywords (:f :float))
   (:format (destination clause)
            (destructuring-bind (_ float &rest args &key width digits scale
-                                  overflowchar padchar) clause
+                                                     overflowchar padchar) clause
              (declare (ignore _))
              (let ((control-string (format nil "~~~{~A~^,~}F" (remove-if #'null args))))
                (format destination control-string float))))
   (:compile (destination clause)
             (destructuring-bind (_ float &key width digits scale
-                                   overflowchar padchar) clause
+                                           overflowchar padchar) clause
               (declare (ignore _))
               (let ((args (list width digits scale overflowchar padchar)))
                 (let ((control-string (format nil "~~~{~A~^,~}F" (remove-if #'null args))))
@@ -520,7 +522,7 @@ is replaced with replacement."
 
 (defun collect-then-and-else (clauses)
   (let ((then
-         (loop
+          (loop
             for clause = (pop clauses)
             while (and clause (not (equalp clause :else)))
             collect clause)))
@@ -529,6 +531,7 @@ is replaced with replacement."
 (define-format-operation if
   (:keywords (:if))
   (:format (destination clause)
+           (declare (ignore destination clause))
            (error "No interpreted :if operation"))
   (:compile (destination clause)
             (destructuring-bind (_ condition &body clauses) clause
@@ -538,10 +541,10 @@ is replaced with replacement."
                 `(if ,condition
                      (progn
                        ,@(loop for clause in then-clauses
-                            collect (compile-clause destination clause)))
+                               collect (compile-clause destination clause)))
                      (progn
                        ,@(loop for clause in else-clauses
-                            collect (compile-clause destination clause)))))))
+                               collect (compile-clause destination clause)))))))
   (:documentation "Conditional operation"))
 
 (define-format-operation times
